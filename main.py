@@ -12,13 +12,13 @@ def init():
         date string
         )   
     '''
-
     cur.execute(sql)
     conn.commit()
 
-def insert_info(amount, category, message=""):
+def insert_info(amount, category, message="", date=None):
 
-    date = str(datetime.now())
+    if date == None:
+        date = str(datetime.now().strftime("%Y-%m-%d"))
     data = (amount, category, message, date)
     conn = db.connect("main.db")
     cur = conn.cursor()
@@ -64,7 +64,56 @@ def view(category=None):
     return total_amount, results
 
 
+def view_by_time(date=None):
+    conn = db.connect("main.db")
+    cur = conn.cursor()
+    if date:
+        sql = '''
+        select * from expenses where date = '{}'
+        '''.format(date)
 
+        sql2 = '''
+        select sum(amount) from expenses where date = '{}'
+        '''.format(date)
+    cur.execute(sql)
+    results = cur.fetchall()
+    cur.execute(sql2)
+    total_amount = cur.fetchone()[0]
+    return total_amount, results
+
+
+def view_by_month(date=None):
+    conn = db.connect("main.db")
+    cur = conn.cursor()
+    if date:
+        sql = '''
+            select * from expenses where strftime('%Y-%m', date) = '{}';
+            '''.format(date)
+        sql2 = '''
+            select sum(amount) from expenses where strftime('%Y-%m', date) = '{}';
+            '''.format(date)
+    cur.execute(sql)
+    results = cur.fetchall()
+    cur.execute(sql2)
+    total_amount = cur.fetchone()[0]
+    return total_amount, results
+
+
+def view_by_year(date=None):
+    conn = db.connect("main.db")
+    cur = conn.cursor()
+    if date:
+        sql = '''
+            select * from expenses where strftime('%Y', date) = '{}';
+            '''.format(date)
+        sql2 = '''
+            select sum(amount) from expenses where strftime('%Y', date) = '{}';
+            '''.format(date)
+    cur.execute(sql)
+    results = cur.fetchall()
+    cur.execute(sql2)
+    total_amount = cur.fetchone()[0]
+    return total_amount, results
 
 # insert_info(120, 'transport', 'uber to home')
 # insert_info(150, 'food', 'pizza for homies')
@@ -76,12 +125,13 @@ def main():
 
     # init()
 
-    choice = input("Enter number 1, 2, 3, 4\n")
+    choice = input("Enter number 1, 2, 3, 4, 5, 6\n")
     if choice == "1":
         amount = input("Enter the amount\n")
-        category  = input("Enter the category\n")
+        category = input("Enter the category\n")
         message = input("Enter the information\n")
-        insert_info(amount, category, message)
+        date = input("Enter the date\n")
+        insert_info(amount, category, message, date)
 
     if choice == "2":
         print(view())
@@ -92,5 +142,20 @@ def main():
 
     if choice == "4":
         delete_info()
+
+    if choice == "5":
+        time_choice = input("Enter 1, 2, 3\n")
+        if time_choice == "1":
+            date = input("Enter the date\n")
+            print(view_by_time(date))
+
+        if time_choice == "2":
+            date = input("Month\n")
+            print(view_by_month(date))
+
+        if time_choice == "3":
+            date = input("Year\n")
+            print(view_by_year(date))
+
 
 main()
