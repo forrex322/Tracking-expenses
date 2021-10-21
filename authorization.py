@@ -24,15 +24,6 @@ def test_view():
     results = cur.fetchall()
     return results
 
-# All accounts
-users = {
-    "root": {
-        "password": "gucci-mane",
-        "group": "admin",
-        "mail": []
-    }
-}
-
 
 # Form validation
 def validate(form):
@@ -46,18 +37,11 @@ def loginauth(username, password):
 
     conn = db.connect("main.db")
     cur = conn.cursor()
-    if users:
-        sql = '''
-            select * from users 
-            '''
-    cur.execute(sql)
-    results = cur.fetchall()
-    return results
-
-    if username in users:
-        if password == users[username]["password"]:
-            print("Login successful")
-            return True
+    cur.execute("SELECT * FROM users WHERE username = ? and password = ?", (username, password))
+    found = cur.fetchone()
+    if found:
+        print("Login successful")
+        return True
     return False
 
 
@@ -84,8 +68,15 @@ def login():
 
 # Register
 def register():
+    conn = db.connect("main.db")
+    cur = conn.cursor()
     while True:
         username = input("New username: ")
+        cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+        found = cur.fetchone()
+        if found:
+            print("User with name is already in use, please try again")
+            continue
         if not len(username) > 0:
             print("Username can't be blank")
             continue
@@ -101,8 +92,6 @@ def register():
     print("Creating account...")
 
     data = (username, password)
-    conn = db.connect("main.db")
-    cur = conn.cursor()
     sql = 'INSERT INTO users VALUES (?, ?)'
     cur.execute(sql, data)
     conn.commit()
@@ -120,52 +109,6 @@ def session(username):
         if option == "logout":
             print("Logging out...")
             break
-        elif option == "view mail":
-            print("Current mail:")
-            for mail in users[username]["mail"]:
-                print(mail)
-        # elif users[username]["group"] == "admin":
-        #     if option == "user mail":
-        #         print("Whos mail would you like to see?")
-        #         userinfo = input("> ")
-        #         if userinfo in users:
-        #             for mail in users[userinfo]["mail"]:
-        #                 print(mail)
-        #         else:
-        #             print("There is no account with that username")
-        #     elif option == "delete mail":
-        #         print("Whos mail would you like to delete?")
-        #         userinfo = input("> ")
-        #         if userinfo in users:
-        #             print("Deleting " + userinfo + "'s mail...")
-        #             users[userinfo]["mail"] = []
-        #             time.sleep(1)
-        #             print(userinfo + "'s mail has been deleted")
-        #         else:
-        #             print("There is no account with that username")
-        #     elif option == "delete account":
-        #         print("Whos account would you like to delete?")
-        #         userinfo = input("> ")
-        #         if userinfo in users:
-        #             print("Are you sure you want to delete " + userinfo + "'s account?")
-        #             print("Options: yes | no")
-        #             while True:
-        #                 confirm = input("> ")
-        #                 if confirm == "yes":
-        #                     print("Deleting " + userinfo + "'s account...")
-        #                     del users[userinfo]
-        #                     time.sleep(1)
-        #                     print(userinfo + "'s account has been deleted")
-        #                     break
-        #                 elif confirm == "no":
-        #                     print("Canceling account deletion...")
-        #                     time.sleep(1)
-        #                     print("Account deletion canceled")
-        #                     break
-        #                 else:
-        #                     print(confirm + " is not an option")
-        #         else:
-        #             print("There is no account with that username")
         else:
             print(option + " is not an option")
 
