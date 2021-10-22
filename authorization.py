@@ -1,8 +1,17 @@
-from main import init_db, insert_expenses, delete_info, db, view, view_by_time, view_by_year, view_by_month
+from functional import (
+    init_db, insert_expenses, delete_user_expenses, view, view_by_day, view_by_year, view_by_month, db
+)
+from settings import (
+    DATABASE_NAME, MENU_ITEMS, EXIT_COMMAND, INSERT_COMMAND,
+    VIEW_USER_EXPENSES_COMMAND, VIEW_BY_TIME_EXPENSES_COMMAND,
+    VIEW_BY_CERTAIN_CATEGORY_COMMAND, DELETE_USER_EXPENSES_COMMAND,
+    VIEW_BY_DATE_COMMAND, VIEW_BY_MONTH_COMMAND,
+    VIEW_BY_YEAR_COMMAND
+)
 
 
 def init_users():
-    conn = db.connect("main.db")
+    conn = db.connect(DATABASE_NAME)
     cur = conn.cursor()
     sql = '''
     create table if not exists users (
@@ -24,7 +33,7 @@ def validate(form):
 
 # Login authorization
 def login_auth(username, password):
-    conn = db.connect("main.db")
+    conn = db.connect(DATABASE_NAME)
     cur = conn.cursor()
     cur.execute("select * from users where username = ? and password = ?", (username, password))
     found = cur.fetchone()
@@ -34,30 +43,35 @@ def login_auth(username, password):
     return False
 
 
+def get_username():
+    return get_user_not_empty_input("Hint: username can't be blank\nUsername: ")
+
+
+def get_password():
+    return get_user_not_empty_input("Hint: password can't be blank\nPassword: ")
+
+
+def get_user_not_empty_input(description):
+    field = ""
+    while len(field) == 0:
+        field = input(description)
+    return field
+
+
 # Login
 def login():
-    while True:
-        username = input("Username: ")
-        if not len(username) > 0:
-            print("Username can't be blank")
-        else:
-            break
-    while True:
-        password = input("Password: ")
-        if not len(password) > 0:
-            print("Password can't be blank")
-        else:
-            break
+    username = get_username()
+    password = get_password()
 
     if login_auth(username, password):
-        return session(username)
+        user_menu(username)
     else:
         print("Invalid username or password")
 
 
 # Register
 def register():
-    conn = db.connect("main.db")
+    conn = db.connect(DATABASE_NAME)
     cur = conn.cursor()
     while True:
         username = input("New username: ")
@@ -89,81 +103,69 @@ def register():
 
 
 # User session
-def session(username):
+def user_menu(username):
     print("Welcome to your account " + username)
     print("Options: expenses | logout")
     while True:
         option = input(username + " > ")
-        if option == "expenses":
-            main(username)
-            continue
         if option == "logout":
             print("Logging out...")
             break
+        elif option == "expenses":
+            expenses_menu(username)
         else:
             print(option + " is not an option")
 
 
-def main(username):
+def expenses_menu(username):
     init_db()
+    choice_menu = {
+        INSERT_COMMAND: insert_expenses_choice,
+        VIEW_USER_EXPENSES_COMMAND: view_user_expenses_choice,
+        VIEW_BY_CERTAIN_CATEGORY_COMMAND: view_by_certain_category_choice,
+        DELETE_USER_EXPENSES_COMMAND: delete_user_expenses,
+        VIEW_BY_TIME_EXPENSES_COMMAND: view_by_time_choice
+    }
+
     while True:
-        choice = input(
-            "Enter the number \n1. Insert info \n2. Show all info \n3. Show certain info \n4. Delete all info \n5. Show info by certain time \n6. Exit\n")
-        if choice == "1":
-            amount = input("Enter the amount\n")
-            category = input("Enter the category\n")
-            message = input("Enter the information\n")
-            date = input("Enter the date(YYYY-MM-DD) or leave this field blank, then the current date will be set\n")
-            insert_expenses(username, amount, category, message, date)
+        choice = input(MENU_ITEMS)
+        if choice in choice_menu:
+            choice_menu[choice](username)
 
-        elif choice == "2":
-            print(view(username, category=None))
-
-        elif choice == "3":
-            category = input("Enter the category to show info\n")
-            print(view(username, category))
-
-        elif choice == "4":
-            delete_info(username)
-
-        elif choice == "5":
-            time_choice = input("Enter the number \n1. Show by day \n2. Show by month \n3. Show by year\n")
-            if time_choice == "1":
-                date = input("Enter the date(YYYY-MM-DD)\n")
-                print(view_by_time(username, date))
-
-            elif time_choice == "2":
-                date = input("Enter the month(YYYY-MM)\n")
-                print(view_by_month(username, date))
-
-            elif time_choice == "3":
-                date = input("Enter the year(YYYY)\n")
-                print(view_by_year(username, date))
-
-            else:
-                print("Please choose correct number")
-
-        elif choice == "6":
+        elif choice == EXIT_COMMAND:
             break
 
         else:
             print("Please choose correct number")
 
 
-def start():
-    init_users()
-    # On start
-    print("Welcome to the system. Please register or login.")
-    print("Options: register | login | exit")
-    while True:
-        option = input("> ")
-        if option == "login":
-            login()
-        elif option == "register":
-            register()
-        elif option == "exit":
-            # On exit
-            print("Shutting down...")
-            break
-        else:
-            print(option + " is not an option")
+def view_by_time_choice(username):
+    choice_menu = {
+        VIEW_BY_DATE_COMMAND: (view_by_day, "Enter the date(YYYY-MM-DD)\n"),
+        VIEW_BY_MONTH_COMMAND: (view_by_month, "Enter the date(YYYY-MM)\n"),
+        VIEW_BY_YEAR_COMMAND: (view_by_year, "Enter the date(YYYY)\n")
+    }
+    time_choice = input("Enter the number \n1. Show by day \n2. Show by month \n3. Show by year\n")
+    if time_choice in choice_menu:
+        date = input(choice_menu[time_choice][1])
+        print(choice_menu[time_choice][0](username, date))
+
+    else:
+        print("Please choose correct number")
+
+
+def view_by_certain_category_choice(username):
+    category = input("Enter the category to show info\n")
+    print(view(username, category))
+
+
+def view_user_expenses_choice(username):
+    print(view(username, category=None))
+
+
+def insert_expenses_choice(username):
+    amount = input("Enter the amount\n")
+    category = input("Enter the category\n")
+    message = input("Enter the information\n")
+    date = input("Enter the date(YYYY-MM-DD) or leave this field blank, then the current date will be set\n")
+    insert_expenses(username, amount, category, message, date)
