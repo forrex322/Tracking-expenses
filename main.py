@@ -3,7 +3,7 @@ from datetime import datetime
 import time
 
 
-def init():
+def init_db():
     conn = db.connect("main.db")
     cur = conn.cursor()
     sql = '''
@@ -21,16 +21,16 @@ def init():
     conn.commit()
 
 
-def insert_info(username, amount, category, message="", date=None):
+def insert_expenses(username, amount, category, message="", date=None):
     if date == "":
         date = str(datetime.now().strftime("%Y-%m-%d"))
     conn = db.connect("main.db")
     cur = conn.cursor()
 
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
     data = (int(current_user_id), amount, category, message, date)
-    sql = 'INSERT INTO expenses (user_id, amount, category, message, date) VALUES (?, ?, ?, ?, ?)'
+    sql = 'insert into expenses (user_id, amount, category, message, date) values (?, ?, ?, ?, ?)'
 
     cur.execute(sql, data)
     conn.commit()
@@ -39,9 +39,11 @@ def insert_info(username, amount, category, message="", date=None):
 def delete_info(username):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
-    sql = 'DELETE FROM expenses WHERE user_id = "{}"'.format(current_user_id)
+    sql = 'delete from expenses where user_id = "{}"'.format(current_user_id)
+
     cur.execute(sql)
     conn.commit()
 
@@ -49,7 +51,8 @@ def delete_info(username):
 def view(username, category=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
     if category:
         sql = '''
@@ -68,6 +71,7 @@ def view(username, category=None):
         sql2 = '''
         select sum(amount) from expenses where user_id = '{}'
         '''.format(current_user_id)
+
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
@@ -78,7 +82,8 @@ def view(username, category=None):
 def view_by_time(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
@@ -88,6 +93,7 @@ def view_by_time(username, date=None):
         sql2 = '''
         select sum(amount) from expenses where date = '{}' and user_id = '{}'
         '''.format(date, current_user_id)
+
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
@@ -98,7 +104,8 @@ def view_by_time(username, date=None):
 def view_by_month(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
@@ -107,6 +114,7 @@ def view_by_month(username, date=None):
         sql2 = '''
             select sum(amount) from expenses where strftime('%Y-%m', date) = '{}' and user_id = '{}';
             '''.format(date, current_user_id)
+
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
@@ -117,7 +125,8 @@ def view_by_month(username, date=None):
 def view_by_year(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+
+    cur.execute("select user_id from users where username = ?", (username,))
     current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
@@ -126,6 +135,7 @@ def view_by_year(username, date=None):
         sql2 = '''
             select sum(amount) from expenses where strftime('%Y', date) = '{}' and user_id = '{}';
             '''.format(date, current_user_id)
+
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)

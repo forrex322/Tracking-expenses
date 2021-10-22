@@ -1,4 +1,4 @@
-from main import *
+from main import init_db, insert_expenses, delete_info, db, view, view_by_time, view_by_year, view_by_month
 
 
 def init_users():
@@ -23,10 +23,10 @@ def validate(form):
 
 
 # Login authorization
-def loginauth(username, password):
+def login_auth(username, password):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE username = ? and password = ?", (username, password))
+    cur.execute("select * from users where username = ? and password = ?", (username, password))
     found = cur.fetchone()
     if found:
         print("Login successful")
@@ -49,7 +49,7 @@ def login():
         else:
             break
 
-    if loginauth(username, password):
+    if login_auth(username, password):
         return session(username)
     else:
         print("Invalid username or password")
@@ -61,7 +61,7 @@ def register():
     cur = conn.cursor()
     while True:
         username = input("New username: ")
-        cur.execute("SELECT * FROM users WHERE username = ?", (username,))
+        cur.execute("select * from users where username = ?", (username,))
         found = cur.fetchone()
         if found:
             print("User with name is already in use, please try again")
@@ -81,11 +81,10 @@ def register():
     print("Creating account...")
 
     data = (username, password)
-    sql = 'INSERT INTO users (username, password) VALUES (?, ?)'
+    sql = 'insert into users (username, password) values (?, ?)'
     cur.execute(sql, data)
     conn.commit()
 
-    time.sleep(1)
     print("Account has been created")
 
 
@@ -106,7 +105,7 @@ def session(username):
 
 
 def main(username):
-    init()
+    init_db()
     while True:
         choice = input(
             "Enter the number \n1. Insert info \n2. Show all info \n3. Show certain info \n4. Delete all info \n5. Show info by certain time \n6. Exit\n")
@@ -115,34 +114,40 @@ def main(username):
             category = input("Enter the category\n")
             message = input("Enter the information\n")
             date = input("Enter the date(YYYY-MM-DD) or leave this field blank, then the current date will be set\n")
-            insert_info(username, amount, category, message, date)
+            insert_expenses(username, amount, category, message, date)
 
-        if choice == "2":
+        elif choice == "2":
             print(view(username, category=None))
 
-        if choice == "3":
+        elif choice == "3":
             category = input("Enter the category to show info\n")
             print(view(username, category))
 
-        if choice == "4":
+        elif choice == "4":
             delete_info(username)
 
-        if choice == "5":
+        elif choice == "5":
             time_choice = input("Enter the number \n1. Show by day \n2. Show by month \n3. Show by year\n")
             if time_choice == "1":
                 date = input("Enter the date(YYYY-MM-DD)\n")
                 print(view_by_time(username, date))
 
-            if time_choice == "2":
+            elif time_choice == "2":
                 date = input("Enter the month(YYYY-MM)\n")
                 print(view_by_month(username, date))
 
-            if time_choice == "3":
+            elif time_choice == "3":
                 date = input("Enter the year(YYYY)\n")
                 print(view_by_year(username, date))
 
-        if choice == "6":
+            else:
+                print("Please choose correct number")
+
+        elif choice == "6":
             break
+
+        else:
+            print("Please choose correct number")
 
 
 def start():
@@ -159,7 +164,6 @@ def start():
         elif option == "exit":
             # On exit
             print("Shutting down...")
-            time.sleep(1)
             break
         else:
             print(option + " is not an option")

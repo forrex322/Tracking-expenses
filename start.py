@@ -1,3 +1,4 @@
 from authorization import start
 
-start()
+if __name__ == '__main__':
+   start()
