@@ -1,28 +1,18 @@
-# Import modules
-import time
-import sqlite3 as db
+from main import *
 
-def init():
+
+def init_users():
     conn = db.connect("main.db")
     cur = conn.cursor()
     sql = '''
     create table if not exists users (
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
         username string,
         password string
         )   
     '''
     cur.execute(sql)
     conn.commit()
-
-def test_view():
-    conn = db.connect("main.db")
-    cur = conn.cursor()
-    sql = '''
-        SELECT * FROM users
-    '''
-    cur.execute(sql)
-    results = cur.fetchall()
-    return results
 
 
 # Form validation
@@ -34,7 +24,6 @@ def validate(form):
 
 # Login authorization
 def loginauth(username, password):
-
     conn = db.connect("main.db")
     cur = conn.cursor()
     cur.execute("SELECT * FROM users WHERE username = ? and password = ?", (username, password))
@@ -92,7 +81,7 @@ def register():
     print("Creating account...")
 
     data = (username, password)
-    sql = 'INSERT INTO users VALUES (?, ?)'
+    sql = 'INSERT INTO users (username, password) VALUES (?, ?)'
     cur.execute(sql, data)
     conn.commit()
 
@@ -103,33 +92,74 @@ def register():
 # User session
 def session(username):
     print("Welcome to your account " + username)
-    print("Options: view mail | send mail | logout")
+    print("Options: expenses | logout")
     while True:
         option = input(username + " > ")
+        if option == "expenses":
+            main(username)
+            continue
         if option == "logout":
             print("Logging out...")
             break
         else:
             print(option + " is not an option")
 
-# init()
 
-print(test_view())
-# On start
-print("Welcome to the system. Please register or login.")
-print("Options: register | login | exit")
-while True:
-    option = input("> ")
-    if option == "login":
-        login()
-    elif option == "register":
-        register()
-    elif option == "exit":
-        break
-    else:
-        print(option + " is not an option")
+def main(username):
+    init()
+    while True:
+        choice = input(
+            "Enter the number \n1. Insert info \n2. Show all info \n3. Show certain info \n4. Delete all info \n5. Show info by certain time \n6. Exit\n")
+        if choice == "1":
+            amount = input("Enter the amount\n")
+            category = input("Enter the category\n")
+            message = input("Enter the information\n")
+            date = input("Enter the date(YYYY-MM-DD) or leave this field blank, then the current date will be set\n")
+            insert_info(username, amount, category, message, date)
+
+        if choice == "2":
+            print(view(username, category=None))
+
+        if choice == "3":
+            category = input("Enter the category to show info\n")
+            print(view(username, category))
+
+        if choice == "4":
+            delete_info(username)
+
+        if choice == "5":
+            time_choice = input("Enter the number \n1. Show by day \n2. Show by month \n3. Show by year\n")
+            if time_choice == "1":
+                date = input("Enter the date(YYYY-MM-DD)\n")
+                print(view_by_time(username, date))
+
+            if time_choice == "2":
+                date = input("Enter the month(YYYY-MM)\n")
+                print(view_by_month(username, date))
+
+            if time_choice == "3":
+                date = input("Enter the year(YYYY)\n")
+                print(view_by_year(username, date))
+
+        if choice == "6":
+            break
 
 
-# On exit
-print("Shutting down...")
-time.sleep(1)
+def start():
+    init_users()
+    # On start
+    print("Welcome to the system. Please register or login.")
+    print("Options: register | login | exit")
+    while True:
+        option = input("> ")
+        if option == "login":
+            login()
+        elif option == "register":
+            register()
+        elif option == "exit":
+            # On exit
+            print("Shutting down...")
+            time.sleep(1)
+            break
+        else:
+            print(option + " is not an option")

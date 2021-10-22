@@ -1,5 +1,7 @@
 import sqlite3 as db
 from datetime import datetime
+import time
+
 
 def init():
     conn = db.connect("main.db")
@@ -9,72 +11,83 @@ def init():
         amount number,
         category string,
         message string,
-        date string
+        date string,
+        user_id integer,
+        FOREIGN KEY (user_id)
+            REFERENCES users (user_id)
         )   
     '''
     cur.execute(sql)
     conn.commit()
 
-def insert_info(amount, category, message="", date=None):
 
-    if date == None:
+def insert_info(username, amount, category, message="", date=None):
+    if date == "":
         date = str(datetime.now().strftime("%Y-%m-%d"))
-    data = (amount, category, message, date)
     conn = db.connect("main.db")
     cur = conn.cursor()
-    sql = 'INSERT INTO expenses VALUES (?, ?, ?, ?)'
+
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
+    data = (int(current_user_id), amount, category, message, date)
+    sql = 'INSERT INTO expenses (user_id, amount, category, message, date) VALUES (?, ?, ?, ?, ?)'
+
     cur.execute(sql, data)
     conn.commit()
 
 
-def delete_info():
+def delete_info(username):
     conn = db.connect("main.db")
     cur = conn.cursor()
-    sql = 'DELETE FROM expenses'
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
+    sql = 'DELETE FROM expenses WHERE user_id = "{}"'.format(current_user_id)
     cur.execute(sql)
     conn.commit()
 
-# log(120, "transport", "uber to the home")
 
-def view(category=None):
+def view(username, category=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
     if category:
         sql = '''
-        select * from expenses where category = '{}'
-        '''.format(category)
+        select * from expenses where category = '{}' and user_id = '{}'
+        '''.format(category, current_user_id)
 
         sql2 = '''
-        select sum(amount) from expenses where category = '{}'
-        '''.format(category)
+        select sum(amount) from expenses where category = '{}' and user_id = '{}'
+        '''.format(category, current_user_id)
 
     else:
         sql = '''
-        select * from expenses 
-        '''.format(category)
+        select * from expenses where user_id = '{}'
+        '''.format(current_user_id)
 
         sql2 = '''
-        select sum(amount) from expenses 
-        '''.format(category)
+        select sum(amount) from expenses where user_id = '{}'
+        '''.format(current_user_id)
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
     total_amount = cur.fetchone()[0]
-
     return total_amount, results
 
 
-def view_by_time(date=None):
+def view_by_time(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
-        select * from expenses where date = '{}'
-        '''.format(date)
+        select * from expenses where date = '{}' and user_id = '{}'
+        '''.format(date, current_user_id)
 
         sql2 = '''
-        select sum(amount) from expenses where date = '{}'
-        '''.format(date)
+        select sum(amount) from expenses where date = '{}' and user_id = '{}'
+        '''.format(date, current_user_id)
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
@@ -82,16 +95,18 @@ def view_by_time(date=None):
     return total_amount, results
 
 
-def view_by_month(date=None):
+def view_by_month(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
-            select * from expenses where strftime('%Y-%m', date) = '{}';
-            '''.format(date)
+            select * from expenses where strftime('%Y-%m', date) = '{}' and user_id = '{}';
+            '''.format(date, current_user_id)
         sql2 = '''
-            select sum(amount) from expenses where strftime('%Y-%m', date) = '{}';
-            '''.format(date)
+            select sum(amount) from expenses where strftime('%Y-%m', date) = '{}' and user_id = '{}';
+            '''.format(date, current_user_id)
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
@@ -99,63 +114,20 @@ def view_by_month(date=None):
     return total_amount, results
 
 
-def view_by_year(date=None):
+def view_by_year(username, date=None):
     conn = db.connect("main.db")
     cur = conn.cursor()
+    cur.execute("SELECT user_id FROM users WHERE username = ?", (username,))
+    current_user_id = cur.fetchone()[0]
     if date:
         sql = '''
-            select * from expenses where strftime('%Y', date) = '{}';
-            '''.format(date)
+            select * from expenses where strftime('%Y', date) = '{}' and user_id = '{}';
+            '''.format(date, current_user_id)
         sql2 = '''
-            select sum(amount) from expenses where strftime('%Y', date) = '{}';
-            '''.format(date)
+            select sum(amount) from expenses where strftime('%Y', date) = '{}' and user_id = '{}';
+            '''.format(date, current_user_id)
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
     total_amount = cur.fetchone()[0]
     return total_amount, results
-
-# insert_info(120, 'transport', 'uber to home')
-# insert_info(150, 'food', 'pizza for homies')
-# print(view('food'))
-#
-# print(view())
-
-def main():
-
-    # init()
-
-    choice = input("Enter number 1, 2, 3, 4, 5, 6\n")
-    if choice == "1":
-        amount = input("Enter the amount\n")
-        category = input("Enter the category\n")
-        message = input("Enter the information\n")
-        date = input("Enter the date\n")
-        insert_info(amount, category, message, date)
-
-    if choice == "2":
-        print(view())
-
-    if choice == "3":
-        category = input("Enter the category to show info\n")
-        print(view(category))
-
-    if choice == "4":
-        delete_info()
-
-    if choice == "5":
-        time_choice = input("Enter 1, 2, 3\n")
-        if time_choice == "1":
-            date = input("Enter the date\n")
-            print(view_by_time(date))
-
-        if time_choice == "2":
-            date = input("Month\n")
-            print(view_by_month(date))
-
-        if time_choice == "3":
-            date = input("Year\n")
-            print(view_by_year(date))
-
-
-main()
