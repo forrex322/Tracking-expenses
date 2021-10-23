@@ -1,6 +1,6 @@
 # Tracking-expense
 
-To start the program you need to write "python start.py" in terminal.
+To start the program you need to write "python main.py" in terminal.
 
 Next you will see authotorization menu with 3 points "register | login | exit"
 To get started, you need to register, you can do it by enter the word "register", after you need to enter your Username and Password.
