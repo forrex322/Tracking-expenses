@@ -2,6 +2,7 @@ import sqlite3 as db
 from datetime import datetime
 from settings import DATABASE_NAME
 
+
 def init_db():
     conn = db.connect(DATABASE_NAME)
     cur = conn.cursor()
@@ -91,7 +92,6 @@ def view_by_year(username, date=None):
 
 
 def view_by_date(username, date=None, date_format="%Y-%m"):
-
     conn = db.connect(DATABASE_NAME)
     cur = conn.cursor()
 
@@ -105,7 +105,6 @@ def view_by_date(username, date=None, date_format="%Y-%m"):
                 select sum(amount) from expenses where strftime('{}', date) = '{}' and user_id = '{}';
                 '''.format(date_format, date, current_user_id)
 
-    print(sql)
     cur.execute(sql)
     results = cur.fetchall()
     cur.execute(sql2)
