@@ -1,12 +1,13 @@
 from authorization import init_users, login, register
-from settings import LOGIN_COMMAND, REGISTER_COMMAND, EXIT_FROM_PROGRAM_COMMAND
+from settings import LOGIN_COMMAND, REGISTER_COMMAND, EXIT_FROM_PROGRAM_COMMAND, WELCOME_MENU_COMMAND, \
+    OPTIONS_MENU_COMMAND, SHUT_DOWN_COMMAND, NOT_OPTION_COMMAND
 
 
 def start():
     init_users()
     # On start
-    print("Welcome to the system. Please register or login.")
-    print("Options: register | login | exit")
+    print(WELCOME_MENU_COMMAND)
+    print(OPTIONS_MENU_COMMAND)
     while True:
         option = input("> ")
         if option == LOGIN_COMMAND:
@@ -15,10 +16,10 @@ def start():
             register()
         elif option == EXIT_FROM_PROGRAM_COMMAND:
             # On exit
-            print("Shutting down...")
+            print(SHUT_DOWN_COMMAND)
             break
         else:
-            print(option + " is not an option")
+            print(option + NOT_OPTION_COMMAND)
 
 
 if __name__ == '__main__':
